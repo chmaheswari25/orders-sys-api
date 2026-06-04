@@ -2,11 +2,11 @@
 <mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
     <http:listener-config name="orders-sys-api-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8082" readTimeout="120000"/>
+        <http:listener-connection host="${listener.host}" port="${listener.port}" readTimeout="${listener.readtimeout}"/>
     </http:listener-config>
     <apikit:config name="orders-sys-api-config" api="resource::13b76344-7c8e-4b37-af69-97671ecedaed:orders-sys-api:1.0.0:raml:zip:orders-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <db:config name="Database_Config" doc:name="Database Config" doc:id="d4b72a15-914e-48c1-9b0c-34d78c1b2ba6" >
-		<db:my-sql-connection host="sql12.freesqldatabase.com" port="3306" user="sql12828524" password="gHTxzqAGRa" database="sql12828524" />
+		<db:my-sql-connection host="${database.host}" port="${database.port}" user="sql12828524" password="gHTxzqAGRa" database="sql12828524" />
 	</db:config>
 	<flow name="orders-sys-api-main">
         <http:listener config-ref="orders-sys-api-httpListenerConfig" path="/api/customer">
@@ -128,13 +128,13 @@ output application/json
         </error-handler>
     </flow>
     <flow name="get:\customer:orders-sys-api-config">
-        <db:select doc:name="Select" doc:id="0b977f4b-bd0b-46cc-a118-b0227fcdd34f" config-ref="Database_Config">
+        <db:select doc:name="fetching customer based on ph no" doc:id="0b977f4b-bd0b-46cc-a118-b0227fcdd34f" config-ref="Database_Config">
 			<db:sql ><![CDATA[select * from product where productId = :productId]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
       productId: attributes.queryParams.productId
 }]]]></db:input-parameters>
 		</db:select>
-		<ee:transform doc:name="Transform Message">
+		<ee:transform doc:name="database response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -150,7 +150,7 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="post:\customer:application\json:orders-sys-api-config">
-		<db:insert doc:name="Insert" doc:id="54363b91-c2eb-4e4d-87bb-10944757518d" config-ref="Database_Config">
+		<db:insert doc:name="Inserting customerdetails" doc:id="54363b91-c2eb-4e4d-87bb-10944757518d" config-ref="Database_Config">
 			<db:sql ><![CDATA[insert into customer(firstName,lastName,email,phoneNumber)
 values(:firstName,:lastName,:email,:phoneNumber)]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
@@ -160,7 +160,7 @@ values(:firstName,:lastName,:email,:phoneNumber)]]></db:sql>
 	phoneNumber: payload.phoneNumber
 }]]]></db:input-parameters>
 		</db:insert>
-		<ee:transform doc:name="Transform Message">
+		<ee:transform doc:name="database response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
